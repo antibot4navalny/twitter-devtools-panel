@@ -54,6 +54,23 @@ function handleMessage(request, sender, sendResponse) {
       // Trigger the download
       downloadJsonFile(jsonData);
     });
+  }else if(request.action == 'clearDB'){
+      // Clear entire storage:   
+      const dbPromise = indexedDB.open('twitterLoggerDatabase');
+
+      dbPromise.onsuccess = event => {
+        const db = event.target.result;
+        const transaction = db.transaction('rawPacketsStore', 'readwrite');
+        const objectStore = transaction.objectStore("rawPacketsStore");
+
+        // Make a request to clear all the data out of the object store
+        const objectStoreRequest = objectStore.clear();
+
+        objectStoreRequest.onsuccess = (event) => {
+          // report the success of our request
+          console.log("Storage cleared by BKGND successfully")
+        }
+      }
   }else{
     // devtools panel
     if (sender.url != browser.runtime.getURL("/devtools/panel/panel.html")) {

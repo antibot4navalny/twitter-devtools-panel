@@ -111,17 +111,41 @@ function findValueByPath(obj, path) {
   return path.reduce((acc, key) => (acc && acc[key] ? acc[key] : null), obj);
 }
 
+
+
+
+//   'tweet_results.result':'overall_result',
+//   'tweet_results.result.core.user_results.result.legacy':'user_legacy',
+  
 const itemMapKeys = {
-  'tweet_results.result.core.user_results.result.legacy.screen_name':'user',
-  'tweet_results.result.legacy.full_text':'text',
+  'tweet_results.result.core.user_results.result.legacy.screen_name':'screen_name',
+  //   'tweet_results.result.core.user_results.result.legacy':'user_legacy',
+  'tweet_results.result.core.user_results.result.rest_id':'user_id',
+  
+  'tweet_results.result.legacy.id_str':'id_str',
+  'tweet_results.result.legacy.full_text':'full_text',
+  
+  'tweet_results.result.legacy.retweet_count':'retweet_count',
+  'tweet_results.result.legacy.favorite_count':'favorite_count',
+  'tweet_results.result.legacy.reply_count':'reply_count',
+  'tweet_results.result.legacy.quote_count':'quote_count',  
+  'tweet_results.result.views.count':'views_count',
+  'tweet_results.result.legacy.bookmark_count':'bookmark_count',
+  'tweet_results.result.legacy.conversation_id_str':'conversation_id_str',
+  
+  'tweet_results.result.legacy.is_quote_status':'is_quote_status',
+  'tweet_results.result.legacy.lang':'lang',
+  'tweet_results.result.legacy.links.entities.urls':'urls',
+    
+    
   'tweet_results.result.note_tweet.note_tweet_results.result.text':'text_note',
   //'tweet_results.result.views.count':'text_views',
-  'tweet_results.result.legacy.created_at':'text_time',
+  'tweet_results.result.legacy.created_at':'created_at',
   'tweet_results.result.quoted_status_result.result.legacy.full_text':'quoted',
   'tweet_results.result.quoted_status_result.result.note_tweet.note_tweet_results.result.text':'quoted_full',
   'tweet_results.result.quoted_status_result.result.core.user_results.result.legacy.screen_name':'quoted_user',
   'tweet_results.result.quoted_status_result.result.legacy.created_at':'quoted_time',
-  'tweet_results.result.legacy.in_reply_to_screen_name':'replay_to',
+  'tweet_results.result.legacy.in_reply_to_screen_name':'reply_to',
   //retweet
   'tweet_results.result.legacy.retweeted_status_result.result.core.user_results.result.legacy.screen_name':'retweet_from',
   'tweet_results.result.legacy.retweeted_status_result.result.legacy.full_text':'retweet_text',
@@ -131,6 +155,7 @@ const itemMapKeys = {
   'tweet_results.result.legacy.retweeted_status_result.result.quoted_status_result.result.legacy.created_at':'retweet_quoted_time',
   'tweet_results.result.legacy.retweeted_status_result.result.quoted_status_result.result.core.user_results.result.legacy.screen_name':'retweet_quoted_user',
 }
+
 const counterMapKeys = {
   'tweet_results.result.views.count':'text_views'
 }
@@ -139,17 +164,25 @@ function extractDataFromItem(innerContent){
   let item = {}
   let counter = {}
   const printObj = printJsonObj(innerContent)
+  
+  
   printObj.forEach((path) => {
-    let usefulItemKey = itemMapKeys[path.join('.')]
-    if(usefulItemKey){
-      item[usefulItemKey] = findValueByPath(innerContent,path)
-    }
-    let usefulCounterKey = counterMapKeys[path.join('.')]
-    if(usefulCounterKey){
-      counter[usefulCounterKey] = findValueByPath(innerContent,path)
-    }
+
+    item = innerContent.tweet_results.result  
+    
+//     let usefulItemKey = itemMapKeys[path.join('.')]
+//     if(usefulItemKey){
+//       item[usefulItemKey] = findValueByPath(innerContent,path)
+//     }
+//     let usefulCounterKey = counterMapKeys[path.join('.')]
+//     if(usefulCounterKey){
+//       counter[usefulCounterKey] = findValueByPath(innerContent,path)
+//     }
   })
-  return {'item':item,'counter':counter}
+  return {
+    'item':item // ,
+//     'counter':counter
+  }
 }
 
 
@@ -199,6 +232,7 @@ function parseUnknownReply(replyContent){
   `<div class="debug">${prepareDebugOutput(replyContent)}</div>`
   responseList.appendChild(p)
 }
+
 function getAllData(callback) {
   const dbPromise = indexedDB.open('twitterLoggerDatabase');
   dbPromise.onsuccess = event => {
@@ -236,14 +270,34 @@ function downloadJsonFile(jsonData) {
 
 function triggerDownload(){
   console.log('triggerDownload_v2')
- //browser.runtime.sendMessage({ action: 'download'});
-getAllData(data => {
+  getAllData(data => {
       const jsonData = JSON.stringify(data);
 
       // Trigger the download
       downloadJsonFile(jsonData);
-    });
+      
+      
+      // Clear entire storage:   
 
+      browser.runtime.sendMessage({ action: 'clearDB'});
+      
+//       const dbPromise = indexedDB.open('twitterLoggerDatabase');
+// 
+//       dbPromise.onsuccess = event => {
+//         const db = event.target.result;
+//         const transaction = db.transaction('rawPacketsStore', 'readwrite');
+//         const objectStore = transaction.objectStore("rawPacketsStore");
+// 
+//         // Make a request to clear all the data out of the object store
+//         const objectStoreRequest = objectStore.clear();
+// 
+//         objectStoreRequest.onsuccess = (event) => {
+//           // report the success of our request
+//           console.log("Storage cleared by PANEL successfully")
+//         }
+//       }
+      
+    });
 }
 
 downloadButton.addEventListener("click", triggerDownload);
